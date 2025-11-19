@@ -115,6 +115,24 @@ If you see an error about missing `.xcworkspace` file when starting Metro:
   ```
 - This will create `EucBleConnectorTest.xcworkspace` which you should use instead of `.xcodeproj` when opening in Xcode
 
+### "Unable to resolve module euc-ble-connector" Error
+
+If you see an error that `euc-ble-connector` cannot be found:
+
+**Solution:**
+1. Make sure the `euc-ble-connector` package exists at `../euc-ble-connector` relative to your project root
+2. Reinstall dependencies:
+   ```bash
+   rm -rf node_modules
+   npm install
+   ```
+3. Clear Metro bundler cache and restart:
+   ```bash
+   npm start -- --reset-cache
+   ```
+
+**Note:** The package is configured as a local file dependency (`file:../euc-ble-connector`). If you're working on a different machine, make sure the package exists at the correct relative path, or update `package.json` to point to the correct location.
+
 ### Folly timedef Build Error
 
 If you encounter a "rct folly timedef" error when building, try the following:

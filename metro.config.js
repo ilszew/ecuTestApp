@@ -8,23 +8,43 @@ const escape = (str) => {
 };
 
 // Try to find the euc-ble-connector package
-let root = null;
+let localRoot = null;
+let nodeModulesRoot = null;
 let modules = [];
+const watchFolders = [];
 
 try {
-  // First, try the local development path
+  // First, try the local development path (actual source)
   const localPath = path.resolve(__dirname, '..', 'euc-ble-connector', 'package.json');
   if (fs.existsSync(localPath)) {
-    root = path.resolve(__dirname, '..', 'euc-ble-connector');
+    localRoot = path.resolve(__dirname, '..', 'euc-ble-connector');
+    watchFolders.push(localRoot);
     const pak = require(localPath);
     modules = Object.keys({
       ...pak.peerDependencies,
     });
-  } else {
-    // Try to find it in node_modules (if installed via npm)
-    const nodeModulesPath = path.resolve(__dirname, 'node_modules', 'euc-ble-connector', 'package.json');
-    if (fs.existsSync(nodeModulesPath)) {
-      root = path.resolve(__dirname, 'node_modules', 'euc-ble-connector');
+  }
+  
+  // Also check node_modules (might be a symlink from file: dependency)
+  const nodeModulesPath = path.resolve(__dirname, 'node_modules', 'euc-ble-connector', 'package.json');
+  if (fs.existsSync(nodeModulesPath)) {
+    nodeModulesRoot = path.resolve(__dirname, 'node_modules', 'euc-ble-connector');
+    
+    // If we don't have a local root, use node_modules and try to resolve the real path
+    if (!localRoot) {
+      try {
+        // Check if it's a symlink and resolve to the actual path
+        const realPath = fs.realpathSync(nodeModulesRoot);
+        if (realPath !== nodeModulesRoot && fs.existsSync(path.join(realPath, 'package.json'))) {
+          localRoot = realPath;
+          watchFolders.push(localRoot);
+        } else {
+          watchFolders.push(nodeModulesRoot);
+        }
+      } catch {
+        watchFolders.push(nodeModulesRoot);
+      }
+      
       const pak = require(nodeModulesPath);
       modules = Object.keys({
         ...pak.peerDependencies,
@@ -53,19 +73,22 @@ const config = {
   },
 };
 
-// Only add watchFolders and resolver config if we found the local package
-if (root && fs.existsSync(root)) {
-  config.watchFolders = [root];
+// Add watchFolders and resolver config if we found the package
+if (watchFolders.length > 0) {
+  config.watchFolders = watchFolders;
   
-  config.resolver = {
-    blacklistRE: new RegExp(
-      `^${escape(path.join(root, 'node_modules'))}\\/.*$`
-    ),
-    extraNodeModules: modules.reduce((acc, name) => {
-      acc[name] = path.join(__dirname, 'node_modules', name);
-      return acc;
-    }, {}),
-  };
+  const root = localRoot || nodeModulesRoot;
+  if (root) {
+    config.resolver = {
+      blacklistRE: new RegExp(
+        `^${escape(path.join(root, 'node_modules'))}\\/.*$`
+      ),
+      extraNodeModules: modules.reduce((acc, name) => {
+        acc[name] = path.join(__dirname, 'node_modules', name);
+        return acc;
+      }, {}),
+    };
+  }
 }
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
