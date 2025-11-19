@@ -229,7 +229,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nexport NODE_BINARY=node\n../node_modules/react-native/scripts/react-native-xcode.sh\n";
+			shellScript = "set -e\n\n# Find node binary - try multiple common locations\nif [ -z \"$NODE_BINARY\" ]; then\n  # Try nvm first (most common for React Native)\n  if [ -s \"$HOME/.nvm/nvm.sh\" ]; then\n    export NVM_DIR=\"$HOME/.nvm\"\n    [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"\n  fi\n  \n  # Try to find node in PATH or common locations\n  NODE_BINARY=$(command -v node 2>/dev/null || echo \"\")\n  \n  if [ -z \"$NODE_BINARY\" ]; then\n    # Try common installation paths\n    if [ -f \"/usr/local/bin/node\" ]; then\n      NODE_BINARY=\"/usr/local/bin/node\"\n    elif [ -f \"/opt/homebrew/bin/node\" ]; then\n      NODE_BINARY=\"/opt/homebrew/bin/node\"\n    elif [ -f \"/usr/bin/node\" ]; then\n      NODE_BINARY=\"/usr/bin/node\"\n    else\n      echo \"error: Could not find node. Please set NODE_BINARY in Xcode build settings.\" >&2\n      exit 1\n    fi\n  fi\n  \n  export NODE_BINARY\nfi\n\n../node_modules/react-native/scripts/react-native-xcode.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
