@@ -85,11 +85,47 @@ No bundle URL present.
 Make sure you're running a packager server or have included a .jsbundle file in your application bundle.
 ```
 
-**Solution:**
-1. Open a terminal in the project root
-2. Run `npm start` to start the Metro bundler
-3. Wait for Metro to start (you'll see "Metro waiting on port 8081")
-4. Rebuild and run your app from Xcode
+**Quick Fix:**
+1. **Start Metro bundler** in a terminal:
+   ```bash
+   npm start
+   ```
+   Wait until you see: `Metro waiting on port 8081`
+
+2. **Rebuild and run** your app from Xcode (Cmd+R)
+
+**Detailed Troubleshooting:**
+
+1. **Verify Metro is running:**
+   ```bash
+   # Check if Metro is running on port 8081
+   lsof -i :8081
+   # Or on Windows:
+   netstat -ano | findstr :8081
+   ```
+
+2. **If Metro isn't running:**
+   ```bash
+   # Start Metro with cache reset
+   npm start -- --reset-cache
+   ```
+
+3. **Check Xcode console** for connection errors. Look for messages like:
+   - "Could not connect to development server"
+   - "Network request failed"
+
+4. **For physical devices:**
+   - Make sure your Mac and device are on the same Wi-Fi network
+   - Shake the device and select "Configure Bundler" to enter your Mac's IP address
+   - Or set the IP in Xcode: Product → Scheme → Edit Scheme → Run → Arguments → Add `--host <your-mac-ip>`
+
+5. **For simulators:**
+   - `localhost` should work automatically
+   - If not, try restarting the simulator
+
+6. **Check firewall/security settings:**
+   - Make sure port 8081 isn't blocked
+   - On macOS, check System Preferences → Security & Privacy → Firewall
 
 **For Release builds:** If you're building a release version, you need to create a bundled JS file:
 ```bash
