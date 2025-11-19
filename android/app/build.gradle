@@ -17,7 +17,7 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 android {
     ndkVersion rootProject.ext.ndkVersion
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion 33
 
     namespace "com.eucbleconnectortest"
     defaultConfig {
@@ -49,9 +49,11 @@ android {
     }
 
     // Fix for Folly timedef issue on Windows
-    packagingOptions {
-        pickFirst '**/libc++_shared.so'
-        pickFirst '**/libjsc.so'
+    packaging {
+        resources {
+            pickFirst '**/libc++_shared.so'
+            pickFirst '**/libjsc.so'
+        }
     }
 }
 

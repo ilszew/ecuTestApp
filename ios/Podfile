@@ -31,6 +31,32 @@ target 'EucBleConnectorTest' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
+    
+    # Fix for Folly timedef issue on iOS
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        # Set C++ standard
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        
+        # Fix for Folly timedef - add preprocessor definitions
+        if config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].reject { |defn| defn.include?('FOLLY_HAVE_CLOCK_GETTIME') }
+        else
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = ['$(inherited)']
+        end
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_HAVE_CLOCK_GETTIME=0'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FOLLY_NO_CONFIG'
+        
+        # Additional flags for Folly
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= ['$(inherited)']
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] << '-DFOLLY_HAVE_CLOCK_GETTIME=0'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] << '-DFOLLY_NO_CONFIG'
+        
+        # Ensure proper header search paths
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']
+      end
+    end
   end
 end
 
